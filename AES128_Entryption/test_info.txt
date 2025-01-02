@@ -1,0 +1,48 @@
+加密模式：ECB
+填充方式：PKCS7
+
+test1
+明文：ffeeddccbbaa99887766554433221100
+密钥：0f0e0d0c0b0a09080706050403020100
+密文：29a7a5cc906e274be7a7579ac7e1bfd0 | 6d00049adfc582b051c393cb8678ad17(有填充)
+
+test2
+明文：d7e5dbd3324595f8fdc7d7c571da6c2a
+密钥：0123456789ABCDEF0123456789ABCDEF
+密文：525a0bb6f6626e941a81cd7b5fe8b620 | 0efb6bfed93b4d1ea2123ba4db075ff6(有填充)
+
+test3
+明文：00112233445566778899aabbccddeeff
+密钥：000102030405060708090a0b0c0d0e0f
+密文：69C4E0D86A7B0430D8CDB78070B4C55A
+
+test4
+明文：4142434445464748494a4b4c4d4e4f54
+密钥：000102030405060708090a0b0c0d0e0f
+密文：b0850321fe0170349cf83a4a8ec460e7
+
+test5
+Decrypted: 00112233445566778899aabbccddeeff
+key = 0f0e0d0c0b0a09080706050403020100
+Ciphertext: f59d7cbf08fc47375511e6d9eecb6804
+
+
+-------------------------------
+已解决：
+1. valid信号(重点，适配AXI) 已加，暂时没问题？
+2. round整合以及其他相关（s_box已处理，round已处理）
+
+待解决：
+1. generate for修改（避免重复例化多个模块，资源浪费，考虑使用always块、状态机控制，MUX选择器选择每轮key）
+2. 流水线（引入流水线提高模块的工作频率。每个加密轮次作为一个流水线阶段，也就是10级加密流水线，在流水线前已完成10个key的生成。）
+
+
+相关处理具体描述：
+1. 修改s_box的使用（变为函数）
+GENERATE_KEY 模块使用 SUB_BYTES 的逻辑来处理 KEY0 的字节替换，并进行密钥扩展。
+SUB_BYTES 模块使用函数 S_BOX 来实现 S 盒查找，从而保持组合逻辑特性。
+
+2. 合并round
+将 ROUND_ITERATION 和 LAST_ROUND 模块合并到一个模块中，通过轮数的标志位判断是否进行列混合操作。
+
+3. .....
